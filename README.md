@@ -2,40 +2,38 @@
 ### By Rostyslav Kostiuk & Oleksii Konopada
 
 ## Introduction
-In this project our task was to design the system that will process the real time stream of cryptocurrency data.
-Transform this data efficiently and store into the DB. As a result the system should provide the API that will give
-endpoints to complete 6 requests stated in the task.
+In this project our task was to design the system that will process the real time stream of cryptocurrency data, transform this data efficiently and store into the DB. Also system should provide the API with endpoints to complete 6 requests stated in the task.
 
 ## Our architecture to solve the problem
 
-Here we would like do provide a diagram of our system:
+Here we would like to provide a diagram of our system:
 ![architecture.png](CryptoProject%2Freadme_images%2Farchitecture.png)
 
-Let's dive in on how it works by each element:
+Let's dive in details on how it works by each element:
 
-- Bitmex website - is the source from which we can get the real time data that we need
+- Bitmex website - it is the source from which we can get the real time data that we need
 - Bitmex Reader service - it is a service that makes a connection with the site via the websockets.
 Then it processes the messages that come from the tables of our interest and writes the new messages but into the kafka
-topic to interact asynchronously with the spark service that will do a further processing. Also this service saves into the Redis DB data that should be update nearly to real time - current buy price for each cryptocurrency and current sell price for each cryptocurrency.
+topic to interact asynchronously with the spark service. This service will do a further processing and saves into the Redis DB data that should be updated close to real time - current buy price for each cryptocurrency and current sell price for each cryptocurrency.
 - Kafka message queue - service that provides the management of the topic needed for further processing.
 - Spark service - service that reads the messages from the kafka topic and do the aggregation transformation to efficiently store the data about each cryptocurrency during the time period. Then saves it in Cassandra DB.
-- Redis DB - storage where we store near real time data
+- Redis DB - storage where we store close to real time data
 - Cassandra DB - storage where we store aggregated data about cryptocurrencies performance
 - User
-- REST API service - service with which the user interact. It provides the answers to the request of interest using the queries to databases.
+- REST API service - service with which user interacts. It provides the answers to the tasks of interest using the queries to databases.
 
 ## DB\schema
 
-As a main DB we have selected a Cassandra DB. Using it we can first of all get the robustness for our data storing, also it is efficient in storing and performing queries on huge amount of data (potentially if our system will run for months and years there we will need to work with terabytes of data).
+As a main DB we have selected a Cassandra DB. Using it we can get the robustness for our data, also it is efficient in storing and performing queries on huge amount of data (potentially if our system will run for months and years than we will need to work with terabytes of data).
 
-Also we have used a Redis to give our system ability to efficiently perform last request. Thats why just when the message arrive into the websocket we update the value of price in the db for the symbol and the side (SELL, BUY) of this transaction.
+Also, we have used a Redis to give our system ability to efficiently perform last request. That's why just when the message arrive into the websocket we update the value of price in the db for the symbol and the side (SELL, BUY) of this transaction.
 
 Our Cassandra schema looks like this:
 
 ![schema.png](CryptoProject%2Freadme_images%2Fschema.png)
                                                               
 
-As you can see it is pretty simple - just aggregates for each cryptocurrency symbol by minutes and hours. However this schema covers the need for all request as they all depend either on minute periods or on hours.
+As you can see it is pretty simple - just aggregates for each cryptocurrency symbol by minutes and hours. However, this schema covers the need for all request as they all depend either on minute periods or on hours.
 
 ## Files description
 Now lets move on to the code and let us provide the description for all the files and directories you can find in this project:
@@ -65,7 +63,7 @@ Now lets move on to the code and let us provide the description for all the file
 As a result after execution of those command in your docker containers list you should see those 6 items running:
 ![containers.png](CryptoProject%2Freadme_images%2Fcontainers.png)
 
-The system has been running for the 4 hours and was scraping the info about the 4 cryptocurrencies. Now lets first of look either everything has been written into the DBs as supprosed:
+The system has been running for the 4 hours and was scraping the info about the 4 cryptocurrencies. Now lets first of look either everything has been written into the DBs as supposed:
 
 ![db_minutes.png](CryptoProject%2Freadme_images%2Fdb_minutes.png)
 ![db_hours.png](CryptoProject%2Freadme_images%2Fdb_hours.png)
