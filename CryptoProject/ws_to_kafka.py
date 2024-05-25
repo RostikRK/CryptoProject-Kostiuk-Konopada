@@ -47,7 +47,7 @@ def on_open(ws):
     def run():
         subscribe_message = {
             "op": "subscribe",
-            "args": ["trade:XBTUSD", "trade:ETHUSD"]
+            "args": ["trade:XBTUSD", "trade:ETHUSD", "trade:ADAUSD", "trade:DOGEUSD", "trade:SOLUSD", "trade:BCHUSD", "trade:MATICUSDT"]
         }
         ws.send(json.dumps(subscribe_message))
     thread = threading.Thread(target=run)
