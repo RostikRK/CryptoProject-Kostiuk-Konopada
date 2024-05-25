@@ -79,7 +79,7 @@ hour_aggregates_df = selected_df \
         count("symbol").alias("num_transactions"),
         sum("size").alias("total_volume")
     ).select(
-        col("window.start").alias("minute"),
+        col("window.start").alias("hour"),
         col("symbol"),
         col("num_transactions"),
         col("total_volume")
