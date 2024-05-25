@@ -10,7 +10,7 @@ app = FastAPI()
 cluster = Cluster(['cassandra-node'])
 session = cluster.connect('crypto_data')
 
-redis_client = redis.StrictRedis(host='redis-server', port=6379, db=0)
+redis_client = redis.StrictRedis(host='redis', port=6379, db=0)
 
 
 def get_current_minute():
@@ -33,6 +33,7 @@ def get_transactions_last_6_hours():
         SELECT hour, symbol, num_transactions 
         FROM hour_aggregates 
         WHERE hour >= %s AND hour < %s
+        ALLOW FILTERING
     """, fetch_size=None)
 
     result = session.execute(query, (start_time, end_time))
@@ -58,6 +59,7 @@ def get_volume_last_6_hours():
         SELECT hour, symbol, total_volume 
         FROM hour_aggregates 
         WHERE hour >= %s AND hour < %s
+        ALLOW FILTERING
     """, fetch_size=None)
 
     result = session.execute(query, (start_time, end_time))
@@ -83,6 +85,7 @@ def get_aggregated_stats_last_12_hours():
         SELECT hour, symbol, num_transactions, total_volume 
         FROM hour_aggregates 
         WHERE hour >= %s AND hour < %s
+        ALLOW FILTERING
     """, fetch_size=None)
 
     result = session.execute(query, (start_time, end_time))
@@ -119,23 +122,24 @@ def get_trades_last_n_minutes(symbol: str, minutes: int = Query(..., ge=1)):
 
 @app.get("/top_cryptos_last_hour")
 def get_top_cryptos_last_hour(top_n: int = Query(..., ge=1)):
-    current_hour = get_current_hour()
-    start_time = current_hour - timedelta(hours=1)
-    end_time = current_hour
+    current_minute = get_current_minute()
+    start_time = current_minute - timedelta(minutes=60)
+    end_time = current_minute
 
     query = SimpleStatement("""
         SELECT symbol, sum(total_volume) as total_volume 
-        FROM hour_aggregates 
-        WHERE hour >= %s AND hour < %s
+        FROM minute_aggregates 
+        WHERE minute >= %s AND minute < %s
         GROUP BY symbol
-        ORDER BY total_volume DESC
-        LIMIT %s
+        ALLOW FILTERING
     """, fetch_size=None)
 
-    result = session.execute(query, (start_time, end_time, top_n))
+    result = session.execute(query, (start_time, end_time))
     data = [{"symbol": row.symbol, "total_volume": row.total_volume} for row in result]
 
-    return {"top_cryptocurrencies": data}
+    sorted_data = sorted(data, key=lambda x: x["total_volume"], reverse=True)[:top_n]
+
+    return {"top_cryptocurrencies": sorted_data}
 
 
 @app.get("/current_price")

@@ -12,7 +12,7 @@ def on_message(ws, message):
         value_serializer=lambda x: json.dumps(x).encode('utf-8')
     )
 
-    redis_client = redis.StrictRedis(host='redis-server', port=6379, db=0)
+    redis_client = redis.StrictRedis(host='redis', port=6379, db=0)
 
     try:
         message_data = json.loads(message)
